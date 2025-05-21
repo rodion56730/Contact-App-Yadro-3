@@ -1,0 +1,103 @@
+package com.example.yadro_test_3.presentation.view
+
+import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.yadro_test_3.domain.model.Contact
+import com.example.yadro_test_3.presentation.ContactViewModel
+import kotlinx.coroutines.delay
+
+
+@OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
+@Composable
+fun ContactListScreen(viewModel: ContactViewModel) {
+    val groupedContacts by viewModel.groupedContacts.collectAsState(emptyMap())
+    val status by viewModel.statusMessage.collectAsState()
+    val context = LocalContext.current
+    var visibleContacts by remember { mutableStateOf(emptyList<Contact>()) }
+
+    LaunchedEffect(Unit) {
+        viewModel.loadContacts()
+    }
+
+    LaunchedEffect(groupedContacts) {
+        if (groupedContacts.values.flatten().size < visibleContacts.size) {
+            delay(300)
+        }
+        visibleContacts = groupedContacts.values.flatten()
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 50.dp, bottom = 20.dp, start = 16.dp, end = 16.dp)
+    ) {
+        LazyColumn(modifier = Modifier.weight(1f)) {
+            groupedContacts.forEach { (letter, contactsForLetter) ->
+                stickyHeader {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.primaryContainer)
+                            .padding(start = 12.dp, top = 6.dp, bottom = 6.dp)
+                    ) {
+                        Text(
+                            text = letter,
+                            style = TextStyle(
+                                color = MaterialTheme.colorScheme.primary,
+                                fontSize = 20.sp
+                            ),
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+
+                items(
+                    items = contactsForLetter,
+                    key = { it.id }
+                ) { contact ->
+                    AnimatedVisibility(
+                        visible = visibleContacts.contains(contact),
+                        exit = fadeOut(animationSpec = tween(300)) +
+                                shrinkVertically(animationSpec = tween(300)),
+                        modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)
+                    ) {
+                        ContactItem(contact = contact)
+                    }
+                }
+            }
+        }
+
+        Button(
+            onClick = { viewModel.deleteDuplicates() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+        ) {
+            Text("Delete duplicate contacts")
+        }
+
+        status?.let {
+            LaunchedEffect(it) {
+                Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+}
