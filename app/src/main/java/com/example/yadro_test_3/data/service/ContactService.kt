@@ -4,6 +4,7 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import android.provider.ContactsContract
+import android.util.Log
 import com.example.yadro_test_3.aidl.IContactService
 import com.example.yadro_test_3.aidl.IDeleteCallback
 
@@ -46,7 +47,7 @@ class ContactService : Service() {
                     val duplicates = contactMap.values.filter { it.size > 1 }
 
                     if (duplicates.isEmpty()) {
-                        callback?.onComplete("Дубликаты не найдены")
+                        callback?.onComplete("Повторяющиеся контакты не найдены")
                         return@Thread
                     }
 
@@ -62,9 +63,10 @@ class ContactService : Service() {
                         }
                     }
 
-                    callback?.onComplete("Дубликаты контактов успешно удалены")
+                    callback?.onComplete("Повторяющиеся контакты удалены успешно")
                 } catch (e: Exception) {
-                    callback?.onComplete("Ошибка: ${e.message}")
+                    callback?.onComplete("Произошла ошибка")
+                    e.message?.let { Log.e("ERROR", it) }
                 }
             }.start()
         }

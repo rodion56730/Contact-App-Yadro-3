@@ -2,7 +2,6 @@ package com.example.yadro_test_3.presentation.view
 
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
@@ -20,14 +19,24 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.yadro_test_3.domain.model.Contact
 import com.example.yadro_test_3.presentation.ContactViewModel
 import kotlinx.coroutines.delay
 
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ContactListScreen(viewModel: ContactViewModel) {
+fun ContactListScreen(viewModel: ContactViewModel, lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current) {
+
+    DisposableEffect(lifecycleOwner) {
+        viewModel.registerLifecycle(lifecycleOwner.lifecycle)
+        onDispose {
+            viewModel.unregisterLifecycle(lifecycleOwner.lifecycle)
+        }
+    }
+
     val groupedContacts by viewModel.groupedContacts.collectAsState(emptyMap())
     val status by viewModel.statusMessage.collectAsState()
     val context = LocalContext.current
@@ -38,7 +47,7 @@ fun ContactListScreen(viewModel: ContactViewModel) {
     }
 
     LaunchedEffect(groupedContacts) {
-        if (groupedContacts.values.flatten().size < visibleContacts.size) {
+        if (groupedContacts.values.flatten().size < visibleContacts.size || groupedContacts.values.flatten().size > visibleContacts.size) {
             delay(300)
         }
         visibleContacts = groupedContacts.values.flatten()
@@ -96,7 +105,8 @@ fun ContactListScreen(viewModel: ContactViewModel) {
 
         status?.let {
             LaunchedEffect(it) {
-                Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                viewModel.clearStatusMessage()
             }
         }
     }

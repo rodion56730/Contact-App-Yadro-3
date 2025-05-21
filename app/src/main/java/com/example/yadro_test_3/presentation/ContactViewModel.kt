@@ -1,5 +1,8 @@
 package com.example.yadro_test_3.presentation
 
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.yadro_test_3.domain.model.Contact
@@ -16,7 +19,6 @@ class ContactViewModel(
 ) : ViewModel() {
 
     private val _contacts = MutableStateFlow<List<Contact>>(emptyList())
-    val contacts: StateFlow<List<Contact>> get() = _contacts
     val groupedContacts = _contacts.map { contacts ->
         contacts.groupBy {
             it.displayName.firstOrNull()?.uppercase() ?: "#"
@@ -36,5 +38,24 @@ class ContactViewModel(
             _statusMessage.value = result
             loadContacts() // reload updated list
         }
+    }
+
+    fun clearStatusMessage() {
+        _statusMessage.value = null
+    }
+
+    private val lifecycleObserver = LifecycleEventObserver { _, event ->
+        when (event) {
+            Lifecycle.Event.ON_START -> loadContacts()
+            else -> Unit
+        }
+    }
+
+    fun registerLifecycle(lifecycle: Lifecycle) {
+        lifecycle.addObserver(lifecycleObserver)
+    }
+
+    fun unregisterLifecycle(lifecycle: Lifecycle) {
+        lifecycle.removeObserver(lifecycleObserver)
     }
 }
