@@ -28,18 +28,24 @@ class ContactRepositoryImpl(private val context: Context) : ContactRepository {
             "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} ASC"
         )
 
+
+
         cursor?.use {
             val idIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID)
             val nameIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
             val numberIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
             val photoIndex = it.getColumnIndex(ContactsContract.Contacts.PHOTO_URI)
-
+            val accountTypeIndex =
+                it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.ACCOUNT_TYPE_AND_DATA_SET)
             while (it.moveToNext()) {
                 val id = it.getString(idIndex)
                 val name = it.getString(nameIndex)
                 val number = it.getString(numberIndex)
                 val photoUri = it.getString(photoIndex)
-                contacts.add(Contact(id, name, number, photoUri?.toUri()))
+                val accountType = it.getString(accountTypeIndex)
+
+                if (accountType == null || accountType == "com.android.contacts")
+                    contacts.add(Contact(id, name, number, photoUri?.toUri()))
             }
         }
         return contacts

@@ -2,7 +2,6 @@ package com.example.yadro_test_3.presentation
 
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.yadro_test_3.domain.model.Contact
@@ -36,7 +35,7 @@ class ContactViewModel(
     fun deleteDuplicates() {
         deleteDuplicatesUseCase.deleteDuplicates { result ->
             _statusMessage.value = result
-            loadContacts() // reload updated list
+            loadContacts()
         }
     }
 

@@ -33,13 +33,12 @@ class ContactService : Service() {
                         val idIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID)
                         val nameIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
                         val numberIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
-                        val photoIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_URI)
+
                         while (it.moveToNext()) {
                             val id = it.getLong(idIndex)
                             val name = it.getString(nameIndex)?.trim() ?: ""
                             val number = it.getString(numberIndex)?.replace("\\s".toRegex(), "") ?: ""
-                            val photoUri = it.getString(photoIndex)
-                            val key = "$name|$number|$photoUri"
+                            val key = "$name|$number"
                             contactMap.getOrPut(key) { mutableListOf() }.add(id)
                         }
                     }
