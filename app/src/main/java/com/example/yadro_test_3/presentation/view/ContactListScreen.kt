@@ -1,6 +1,10 @@
 package com.example.yadro_test_3.presentation.view
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
@@ -19,6 +23,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.yadro_test_3.domain.model.Contact
@@ -30,6 +35,21 @@ import kotlinx.coroutines.delay
 @Composable
 fun ContactListScreen(viewModel: ContactViewModel, lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current) {
 
+    val groupedContacts by viewModel.groupedContacts.collectAsState(emptyMap())
+    val status by viewModel.statusMessage.collectAsState()
+    val context = LocalContext.current
+    var visibleContacts by remember { mutableStateOf(emptyList<Contact>()) }
+    val permission = Manifest.permission.READ_CONTACTS
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            viewModel.loadContacts()
+        } else {
+            Toast.makeText(context, "Разрешение на доступ к контактам не предоставлено", Toast.LENGTH_SHORT).show()
+        }
+    }
     DisposableEffect(lifecycleOwner) {
         viewModel.registerLifecycle(lifecycleOwner.lifecycle)
         onDispose {
@@ -37,13 +57,18 @@ fun ContactListScreen(viewModel: ContactViewModel, lifecycleOwner: LifecycleOwne
         }
     }
 
-    val groupedContacts by viewModel.groupedContacts.collectAsState(emptyMap())
-    val status by viewModel.statusMessage.collectAsState()
-    val context = LocalContext.current
-    var visibleContacts by remember { mutableStateOf(emptyList<Contact>()) }
+
 
     LaunchedEffect(Unit) {
-        viewModel.loadContacts()
+        val isGranted = ContextCompat.checkSelfPermission(
+            context, permission
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (isGranted) {
+            viewModel.loadContacts()
+        } else {
+            permissionLauncher.launch(permission)
+        }
     }
 
     LaunchedEffect(groupedContacts) {

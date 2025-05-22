@@ -5,8 +5,10 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.pm.PackageManager
 import android.os.IBinder
 import android.provider.ContactsContract
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.example.yadro_test_3.aidl.IDeleteCallback
 import com.example.yadro_test_3.aidl.IContactService
@@ -18,6 +20,9 @@ class ContactRepositoryImpl(private val context: Context) : ContactRepository {
 
     override fun getContacts(): List<Contact> {
         val contacts = mutableListOf<Contact>()
+        if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            return emptyList() // или пробрось исключение, или сообщи ViewModel’ке
+        }
         val resolver = context.contentResolver
 
         val cursor = resolver.query(
